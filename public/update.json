@@ -1,0 +1,14 @@
+{
+    "version": "1.0.0",
+    "versionCode": 1,
+    "changelog": {
+        "pt": "Primeiro lançamento",
+        "en": "First release"
+    },
+    "downloadSources": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/newwaycommunity/nwc-app/releases/download/release/app-release.apk"
+        }
+    ]
+}
