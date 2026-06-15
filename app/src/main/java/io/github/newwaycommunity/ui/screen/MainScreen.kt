@@ -48,7 +48,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -267,34 +266,42 @@ fun MainScreen(viewModel: MainViewModel) {
 
     if (showUpdateDialog) {
         AlertDialog(
-            onDismissRequest = { if (!isDownloading) showUpdateDialog = false },
+            onDismissRequest = { if (!isDownloading && !isDownloadFinished) showUpdateDialog = false },
             title = { 
                 Text(
-                    text = "Atualização Disponível", 
+                    text = "Atualização disponível", 
                     fontWeight = FontWeight.Bold, 
-                    fontSize = 22.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    fontSize = 20.sp
                 ) 
             },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(text = "Versão: $serverVersionName", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                    Text(text = "Changelog: $serverChangelog", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = "Versão: $serverVersionName", 
+                        fontWeight = FontWeight.SemiBold, 
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Changelog: $serverChangelog", 
+                        fontSize = 14.sp, 
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     
                     if (isDownloading || isDownloadFinished) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         if (isDownloadFinished) {
                             LinearProgressIndicator(
-                                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(99.dp)),
+                                modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
                                 color = MaterialTheme.colorScheme.primary
                             )
                         } else {
                             LinearProgressIndicator(
                                 progress = { downloadProgress },
-                                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(99.dp)),
+                                modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
                                 color = MaterialTheme.colorScheme.primary,
                                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
@@ -331,9 +338,7 @@ fun MainScreen(viewModel: MainViewModel) {
                 ) {
                     Text("Depois")
                 }
-            },
-            shape = RoundedCornerShape(28.dp),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            }
         )
     }
 
