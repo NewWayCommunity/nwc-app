@@ -22,15 +22,14 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystorePath = System.getenv("KEYSTORE_PATH") ?: "nwc-release-key.jks"
-            val keystorePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            val keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
-            val keyPassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            val envPath = System.getenv("KEYSTORE_PATH") ?: "nwc-release-key.jks"
+            val envPassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            val envAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
 
-            storeFile = file(keystorePath)
-            storePassword = keystorePassword
-            keyAlias = keyAlias
-            keyPassword = keyPassword
+            storeFile = file(envPath)
+            storePassword = envPassword
+            keyAlias = envAlias
+            keyPassword = envPassword
         }
     }
 
