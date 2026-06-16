@@ -56,13 +56,13 @@ import io.github.newwaycommunity.R
 import io.github.newwaycommunity.model.Game
 import io.github.newwaycommunity.util.UpdateUtil
 import io.github.newwaycommunity.viewmodel.MainViewModel
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.Locale
 
 fun Modifier.shimmerModifier(): Modifier = composed {
     val transition = rememberInfiniteTransition(label = "Shimmer")
@@ -469,7 +469,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         }
     ) {
         Scaffold(
-            contentWindowInsets = WindowInsets.safeDrawing,
             topBar = {
                 TopAppBar(
                     windowInsets = WindowInsets.safeDrawing,
@@ -997,7 +996,7 @@ private fun BoxScope.userIsAdminRow(game: Game) {
                 painter = painterResource(id = R.drawable.edit_24px),
                 contentDescription = "Editar",
                 modifier = Modifier.size(16.dp)
-              )
+            )
         }
 
         FilledIconButton(
