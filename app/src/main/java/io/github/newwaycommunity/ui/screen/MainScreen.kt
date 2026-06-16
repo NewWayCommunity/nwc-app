@@ -93,7 +93,7 @@ fun Modifier.shimmerModifier(): Modifier = composed {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -127,12 +127,6 @@ fun MainScreen(viewModel: MainViewModel) {
     var serverVersionName by remember { mutableStateOf("") }
     var serverChangelog by remember { mutableStateOf("") }
     var updateUrl by remember { mutableStateOf("") }
-
-    val mediaPlayer = remember {
-        MediaPlayer.create(context, R.raw.music).apply {
-            isLooping = true
-        }
-    }
 
     LaunchedEffect(Unit) {
         val currentVersionCode = try {
@@ -224,20 +218,6 @@ fun MainScreen(viewModel: MainViewModel) {
         
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            try {
-                if (mediaPlayer.isPlaying) {
-                    mediaPlayer.pause()
-                }
-            } catch (_: Exception) {}
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            try {
-                mediaPlayer.stop()
-                mediaPlayer.release()
-            } catch (_: Exception) {}
         }
     }
 
@@ -486,6 +466,7 @@ fun MainScreen(viewModel: MainViewModel) {
         }
     ) {
         Scaffold(
+            contentWindowInsets = WindowInsets.safeDrawing,
             topBar = {
                 TopAppBar(
                     title = {

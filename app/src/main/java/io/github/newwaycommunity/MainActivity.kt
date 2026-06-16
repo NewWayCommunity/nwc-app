@@ -1,5 +1,6 @@
 package io.github.newwaycommunity
 
+import android.media.MediaPlayer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,10 +17,17 @@ import io.github.newwaycommunity.viewmodel.MainViewModel
 class MainActivity : ComponentActivity() {
     
     private val viewModel: MainViewModel by viewModels()
+    private var mediaPlayer: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        if (mediaPlayer == null) {
+            mediaPlayer = MediaPlayer.create(this, R.raw.music).apply {
+                isLooping = true
+            }
+        }
+
         setContent {
             val themeMode by viewModel.selectedThemeMode.collectAsState()
             val monetEnabled by viewModel.monetEnabled.collectAsState()
@@ -31,9 +39,21 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    MainScreen(viewModel = viewModel)
+                    MainScreen(
+                        viewModel = viewModel,
+                        mediaPlayer = mediaPlayer!!
+                    )
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+        } catch (_: Exception) {}
     }
 }

@@ -1,9 +1,9 @@
 {
-    "version": "1.1.6",
-    "versionCode": 4,
+    "version": "1.1.7",
+    "versionCode": 5,
     "changelog": {
-        "pt": "fix: crash issue",
-        "en": "fix: crash issue"
+        "pt": "fix: music and other fixes",
+        "en": "fix: music and other fixes"
     },
     "downloadSources": [
         {
