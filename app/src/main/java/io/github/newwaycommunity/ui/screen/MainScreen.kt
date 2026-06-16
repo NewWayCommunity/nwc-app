@@ -463,11 +463,11 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                 }
             }
         }
-    ) {
+    ) { innerPadding ->
         Scaffold(
             topBar = {
                 TopAppBar(
-                    windowInsets = TopAppBarDefaults.windowInsets,
+                    windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
                     title = {
                         Text(
                             text = menuItems.find { it.first == currentSection }?.second ?: "NWC",
