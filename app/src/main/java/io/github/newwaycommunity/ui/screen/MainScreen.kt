@@ -11,7 +11,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -121,7 +120,7 @@ fun MainScreen(viewModel: MainViewModel) {
     
     var showUpdateDialog by remember { mutableStateOf(false) }
     var isDownloading by remember { mutableStateOf(false) }
-    var isDownloadFinished by remember { mutableStateOf(false) }
+    var_isDownloadFinished by remember { mutableStateOf(false) }
     var downloadProgress by remember { mutableStateOf(0.0f) }
     
     var serverVersionName by remember { mutableStateOf("") }
@@ -203,35 +202,41 @@ fun MainScreen(viewModel: MainViewModel) {
 
     DisposableEffect(lifecycleOwner, isMusicPlaying) {
         val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> {
-                    if (isMusicPlaying && !mediaPlayer.isPlaying) {
-                        mediaPlayer.start()
+            try {
+                when (event) {
+                    Lifecycle.Event.ON_RESUME -> {
+                        if (isMusicPlaying && !mediaPlayer.isPlaying) {
+                            mediaPlayer.start()
+                        }
                     }
-                }
-                Lifecycle.Event.ON_PAUSE -> {
-                    if (mediaPlayer.isPlaying) {
-                        mediaPlayer.pause()
+                    Lifecycle.Event.ON_PAUSE -> {
+                        if (mediaPlayer.isPlaying) {
+                            mediaPlayer.pause()
+                        }
                     }
+                    else -> {}
                 }
-                else -> {}
-            }
+            } catch (_: Exception) {}
         }
         
         lifecycleOwner.lifecycle.addObserver(observer)
         
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            if (mediaPlayer.isPlaying) {
-                mediaPlayer.pause()
-            }
+            try {
+                if (mediaPlayer.isPlaying) {
+                    mediaPlayer.pause()
+                }
+            } catch (_: Exception) {}
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            mediaPlayer.stop()
-            mediaPlayer.release()
+            try {
+                mediaPlayer.stop()
+                mediaPlayer.release()
+            } catch (_: Exception) {}
         }
     }
 
@@ -501,11 +506,13 @@ fun MainScreen(viewModel: MainViewModel) {
                         IconButton(onClick = {
                             isMusicPlaying = !isMusicPlaying
                             sharedPreferences.edit().putBoolean("music_enabled", isMusicPlaying).apply()
-                            if (isMusicPlaying) {
-                                mediaPlayer.start()
-                            } else {
-                                mediaPlayer.pause()
-                            }
+                            try {
+                                if (isMusicPlaying) {
+                                    mediaPlayer.start()
+                                } else {
+                                    mediaPlayer.pause()
+                                }
+                            } catch (_: Exception) {}
                         }) {
                             Icon(
                                 painter = painterResource(
