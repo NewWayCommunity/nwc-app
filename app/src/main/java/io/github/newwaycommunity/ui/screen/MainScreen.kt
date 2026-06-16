@@ -11,6 +11,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -120,7 +121,7 @@ fun MainScreen(viewModel: MainViewModel) {
     
     var showUpdateDialog by remember { mutableStateOf(false) }
     var isDownloading by remember { mutableStateOf(false) }
-    var_isDownloadFinished by remember { mutableStateOf(false) }
+    var isDownloadFinished by remember { mutableStateOf(false) }
     var downloadProgress by remember { mutableStateOf(0.0f) }
     
     var serverVersionName by remember { mutableStateOf("") }
