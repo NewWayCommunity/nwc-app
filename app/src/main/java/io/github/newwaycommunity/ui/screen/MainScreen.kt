@@ -463,12 +463,11 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                 }
             }
         }
-    ) {
+    ) { innerPadding ->
         Scaffold(
-            contentWindowInsets = WindowInsets.displayCutout,
             topBar = {
                 TopAppBar(
-                    windowInsets = WindowInsets.displayCutout,
+                    windowInsets = TopAppBarDefaults.windowInsets,
                     title = {
                         Text(
                             text = menuItems.find { it.first == currentSection }?.second ?: "NWC",
@@ -553,11 +552,12 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     }
                 }
             }
-        ) { innerPadding ->
+        ) { scaffoldPadding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(scaffoldPadding)
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                     .background(MaterialTheme.colorScheme.background)
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = { focusManager.clearFocus() })
