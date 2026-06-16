@@ -8,6 +8,7 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -59,10 +60,75 @@ import io.github.newwaycommunity.viewmodel.MainViewModel
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
+import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+
+private data class Star(
+    var x: Float,
+    var y: Float,
+    var radius: Float,
+    var speed: Float,
+    var alpha: Float,
+    var twinkle: Float
+)
+
+@Composable
+private fun StarsEffectComponent() {
+    val stars = remember { mutableStateListOf<Star>() }
+    var timeMillis by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            withFrameMillis { frameTime ->
+                timeMillis = frameTime
+            }
+        }
+    }
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        if (stars.isEmpty()) {
+            val width = size.width
+            val height = size.height
+            if (width > 0 && height > 0) {
+                repeat(120) {
+                    stars.add(
+                        Star(
+                            x = Random.nextFloat() * width,
+                            y = Random.nextFloat() * height,
+                            radius = Random.nextFloat() * 1.4f + 0.3f,
+                            speed = Random.nextFloat() * 0.4f + 0.08f,
+                            alpha = Random.nextFloat() * 0.6f + 0.3f,
+                            twinkle = Random.nextFloat() * Math.PI.toFloat() * 2f
+                        )
+                    )
+                }
+            }
+        }
+
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+        val currentSec = timeMillis / 1000f
+
+        stars.forEach { star ->
+            val sinAlpha = star.alpha * (0.7f + 0.3f * kotlin.math.sin(currentSec * 0.8f + star.twinkle))
+            
+            drawCircle(
+                color = Color.White.copy(alpha = sinAlpha.coerceIn(0f, 1f)),
+                radius = star.radius,
+                center = Offset(star.x, star.y)
+            )
+
+            star.y += star.speed
+            if (star.y > canvasHeight + 2f) {
+                star.y = -2f
+                star.x = Random.nextFloat() * canvasWidth
+            }
+        }
+    }
+}
 
 fun Modifier.shimmerModifier(): Modifier = composed {
     val transition = rememberInfiniteTransition(label = "Shimmer")
@@ -118,6 +184,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
 
     val sharedPreferences = remember { context.getSharedPreferences("nwc_settings", Context.MODE_PRIVATE) }
     var isMusicPlaying by remember { mutableStateOf(sharedPreferences.getBoolean("music_enabled", false)) }
+    var starsEnabled by remember { mutableStateOf(sharedPreferences.getBoolean("stars_enabled", true)) }
     
     var showUpdateDialog by remember { mutableStateOf(false) }
     var isDownloading by remember { mutableStateOf(false) }
@@ -347,190 +414,213 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         )
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                modifier = Modifier.width(300.dp),
-                drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Top + WindowInsetsSides.Bottom)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 24.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet(
+                    modifier = Modifier.width(300.dp),
+                    drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Top + WindowInsetsSides.Bottom)
                 ) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "New Way Community",
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    menuItems.forEach { (route, label, iconRes) ->
-                        NavigationDrawerItem(
-                            label = { Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.Medium) },
-                            icon = { Icon(painter = painterResource(id = iconRes), contentDescription = label) },
-                            selected = currentSection == route,
-                            onClick = {
-                                viewModel.loadSection(route)
-                                scope.launch { drawerState.close() }
-                            },
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 24.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            text = "New Way Community",
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        menuItems.forEach { (route, label, iconRes) ->
+                            NavigationDrawerItem(
+                                label = { Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.Medium) },
+                                icon = { Icon(painter = painterResource(id = iconRes), contentDescription = label) },
+                                selected = currentSection == route,
+                                onClick = {
+                                    viewModel.loadSection(route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    unselectedContainerColor = Color.Transparent
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                        
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp),
-                            colors = NavigationDrawerItemDefaults.colors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                unselectedContainerColor = Color.Transparent
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-                    
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "Tema", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                        
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            modifier = Modifier.height(38.dp)
+                                .padding(horizontal = 24.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.padding(2.dp),
-                                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            Text(text = "Tema", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                modifier = Modifier.height(38.dp)
                             ) {
-                                val modes = listOf(
-                                    R.drawable.light_mode_24px, 
-                                    R.drawable.brightness_auto_24px, 
-                                    R.drawable.dark_mode_24px
-                                )
-                                modes.forEachIndexed { index, iconRes ->
-                                    val isSelected = selectedThemeMode == index
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                        modifier = Modifier
-                                            .size(34.dp)
-                                            .clickable { viewModel.setThemeMode(index) }
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                painter = painterResource(id = iconRes),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(18.dp),
-                                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
+                                Row(
+                                    modifier = Modifier.padding(2.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    val modes = listOf(
+                                        R.drawable.light_mode_24px, 
+                                        R.drawable.brightness_auto_24px, 
+                                        R.drawable.dark_mode_24px
+                                    )
+                                    modes.forEachIndexed { index, iconRes ->
+                                        val isSelected = selectedThemeMode == index
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                            modifier = Modifier
+                                                .size(34.dp)
+                                                .clickable { viewModel.setThemeMode(index) }
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    painter = painterResource(id = iconRes),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp),
+                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp, vertical = 4.dp)
-                                .clickable { viewModel.setMonetEnabled(!monetEnabled) },
+                                .clickable { 
+                                    starsEnabled = !starsEnabled
+                                    sharedPreferences.edit().putBoolean("stars_enabled", starsEnabled).apply()
+                                },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "Cores dinâmicas", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            Text(text = "Efeito de neve", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             Switch(
-                                checked = monetEnabled, 
-                                onCheckedChange = { viewModel.setMonetEnabled(it) },
+                                checked = starsEnabled, 
+                                onCheckedChange = { 
+                                    starsEnabled = it
+                                    sharedPreferences.edit().putBoolean("stars_enabled", it).apply()
+                                },
                                 modifier = Modifier.graphicsLayer(scaleX = 0.8f, scaleY = 0.8f)
                             )
+                        }
+
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 4.dp)
+                                    .clickable { viewModel.setMonetEnabled(!monetEnabled) },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "Cores dinâmicas", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                Switch(
+                                    checked = monetEnabled, 
+                                    onCheckedChange = { viewModel.setMonetEnabled(it) },
+                                    modifier = Modifier.graphicsLayer(scaleX = 0.8f, scaleY = 0.8f)
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
-                    title = {
-                        Text(
-                            text = menuItems.find { it.first == currentSection }?.second ?: "NWC",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.menu_24px),
-                                contentDescription = "Menu"
+        ) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
+                        title = {
+                            Text(
+                                text = menuItems.find { it.first == currentSection }?.second ?: "NWC",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
                             )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = {
-                            isMusicPlaying = !isMusicPlaying
-                            sharedPreferences.edit().putBoolean("music_enabled", isMusicPlaying).apply()
-                            try {
-                                if (isMusicPlaying) {
-                                    mediaPlayer.start()
-                                } else {
-                                    mediaPlayer.pause()
-                                }
-                            } catch (_: Exception) {}
-                        }) {
-                            Icon(
-                                painter = painterResource(
-                                    id = if (isMusicPlaying) R.drawable.music_note_24px else R.drawable.music_off_24px
-                                ),
-                                contentDescription = "Música"
-                            )
-                        }
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.menu_24px),
+                                    contentDescription = "Menu"
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = {
+                                isMusicPlaying = !isMusicPlaying
+                                sharedPreferences.edit().putBoolean("music_enabled", isMusicPlaying).apply()
+                                try {
+                                    if (isMusicPlaying) {
+                                        mediaPlayer.start()
+                                    } else {
+                                        mediaPlayer.pause()
+                                    }
+                                } catch (_: Exception) {}
+                            }) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (isMusicPlaying) R.drawable.music_note_24px else R.drawable.music_off_24px
+                                    ),
+                                    contentDescription = "Música"
+                                )
+                            }
 
-                        IconButton(onClick = {
-                            try {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://discord.gg/W5DUnEUgtj")))
-                            } catch (_: Exception) {}
-                        }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.discord_24px),
-                                contentDescription = "Discord"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                            IconButton(onClick = {
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://discord.gg/W5DUnEUgtj")))
+                                } catch (_: Exception) {}
+                            }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.discord_24px),
+                                    contentDescription = "Discord"
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
-                )
-            },
-            floatingActionButton = {
-                if (isUserAdmin) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        FloatingActionButton(
-                            onClick = { /* Temizleme */ },
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            shape = RoundedCornerShape(16.dp)
+                },
+                floatingActionButton = {
+                    if (isUserAdmin) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            FloatingActionButton(
+                                onClick = { /* Temizleme */ },
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                shape = RoundedCornerShape(16.dp)
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.delete_sweep_24px),
@@ -776,6 +866,11 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     }
                 }
             }
+        }
+    }
+
+        if (isCalculatedDark && starsEnabled) {
+            StarsEffectComponent()
         }
     }
 }

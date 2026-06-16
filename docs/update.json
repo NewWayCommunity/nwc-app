@@ -1,9 +1,9 @@
 {
-    "version": "1.2.1",
-    "versionCode": 9,
+    "version": "1.2.2",
+    "versionCode": 10,
     "changelog": {
-        "pt": "Probably final update",
-        "en": "Probably final update"
+        "pt": "Add stars animation like website",
+        "en": "Add stars animation like website"
     },
     "downloadSources": [
         {
