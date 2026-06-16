@@ -240,16 +240,14 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         2 -> true
         else -> systemInDark
     }
-    val statusBarColor = Color.Transparent
+    val statusBarColor = MaterialTheme.colorScheme.surfaceContainerHigh
     
     SideEffect {
         val window = (context as? Activity)?.window
         if (window != null) {
             val insetsController = WindowCompat.getInsetsController(window, view)
             window.statusBarColor = statusBarColor.toArgb()
-            window.navigationBarColor = statusBarColor.toArgb()
             insetsController.isAppearanceLightStatusBars = !isCalculatedDark
-            insetsController.isAppearanceLightNavigationBars = !isCalculatedDark
         }
     }
 
@@ -469,9 +467,9 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         }
     ) {
         Scaffold(
-            contentWindowInsets = WindowInsets.consumed,
             topBar = {
                 TopAppBar(
+                    windowInsets = WindowInsets.safeDrawing,
                     title = {
                         Text(
                             text = menuItems.find { it.first == currentSection }?.second ?: "NWC",
