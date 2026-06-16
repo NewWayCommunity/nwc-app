@@ -888,7 +888,7 @@ fun ShimmerGameCardItem() {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(165.dp)
+                    .aspectRatio(16f / 9f)
                     .shimmerModifier()
             )
             Column(modifier = Modifier.padding(18.dp)) {
