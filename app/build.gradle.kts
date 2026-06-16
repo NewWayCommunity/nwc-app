@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.newwaycommunity"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.1.7"
+        versionCode = 6
+        versionName = "1.1.8"
 
         vectorDrawables {
             useSupportLibrary = true

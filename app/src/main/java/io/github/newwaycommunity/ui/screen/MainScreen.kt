@@ -240,14 +240,16 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         2 -> true
         else -> systemInDark
     }
-    val statusBarColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val statusBarColor = Color.Transparent
     
     SideEffect {
         val window = (context as? Activity)?.window
         if (window != null) {
             val insetsController = WindowCompat.getInsetsController(window, view)
             window.statusBarColor = statusBarColor.toArgb()
+            window.navigationBarColor = statusBarColor.toArgb()
             insetsController.isAppearanceLightStatusBars = !isCalculatedDark
+            insetsController.isAppearanceLightNavigationBars = !isCalculatedDark
         }
     }
 
@@ -354,7 +356,8 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         drawerContent = {
             ModalDrawerSheet(
                 modifier = Modifier.width(300.dp),
-                drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Top + WindowInsetsSides.Bottom)
             ) {
                 Column(
                     modifier = Modifier
@@ -469,6 +472,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             contentWindowInsets = WindowInsets.safeDrawing,
             topBar = {
                 TopAppBar(
+                    windowInsets = WindowInsets.safeDrawing,
                     title = {
                         Text(
                             text = menuItems.find { it.first == currentSection }?.second ?: "NWC",
@@ -855,65 +859,11 @@ fun GameCard(game: Game, isAdminMode: Boolean, onLinkClick: (String) -> Unit) {
                 }
 
                 if (isAdminMode) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        FilledIconButton(
-                            onClick = { /* Düzenleme */ },
-                            modifier = Modifier.size(32.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.edit_24px),
-                                contentDescription = "Editar",
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-
-                        FilledIconButton(
-                            onClick = { /* Silme */ },
-                            modifier = Modifier.size(32.dp),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.delete_24px),
-                                contentDescription = "Deletar",
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
+                    userIsAdminRow(game)
                 }
 
                 if (game.pinned) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(8.dp)
-                            .size(32.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.keep_24px),
-                                contentDescription = "Fixar",
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    }
+                    gamePinnedSurface()
                 }
             }
 
@@ -999,6 +949,70 @@ fun GameCard(game: Game, isAdminMode: Boolean, onLinkClick: (String) -> Unit) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.gamePinnedSurface() {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(8.dp)
+            .size(32.dp)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.keep_24px),
+                contentDescription = "Fixar",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.userIsAdminRow(game: Game) {
+    Row(
+        modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        FilledIconButton(
+            onClick = { /* Düzenleme */ },
+            modifier = Modifier.size(32.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.edit_24px),
+                contentDescription = "Editar",
+                modifier = Modifier.size(16.dp)
+              )
+        }
+
+        FilledIconButton(
+            onClick = { /* Silme */ },
+            modifier = Modifier.size(32.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer
+            )
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.delete_24px),
+                contentDescription = "Deletar",
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }
