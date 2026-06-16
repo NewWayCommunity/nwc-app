@@ -98,8 +98,8 @@ private fun StarsEffectComponent() {
                         Star(
                             x = Random.nextFloat() * width,
                             y = Random.nextFloat() * height,
-                            radius = Random.nextFloat() * 1.4f + 0.3f,
-                            speed = Random.nextFloat() * 0.4f + 0.08f,
+                            radius = Random.nextFloat() * 3.5f + 1.2f,
+                            speed = Random.nextFloat() * 0.8f + 0.2f,
                             alpha = Random.nextFloat() * 0.6f + 0.3f,
                             twinkle = Random.nextFloat() * Math.PI.toFloat() * 2f
                         )
@@ -415,6 +415,10 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        if (isCalculatedDark && starsEnabled) {
+            StarsEffectComponent()
+        }
+
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
@@ -522,7 +526,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "Efeito de neve", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            Text(text = "Efeito de estrelas", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             Switch(
                                 checked = starsEnabled, 
                                 onCheckedChange = { 
@@ -555,6 +559,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             }
         ) {
             Scaffold(
+                containerColor = Color.Transparent,
                 topBar = {
                     TopAppBar(
                         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
@@ -605,7 +610,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f),
                             titleContentColor = MaterialTheme.colorScheme.onSurface
                         )
                     )
@@ -621,243 +626,244 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
                                 shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.delete_sweep_24px),
-                                contentDescription = "Limpar"
-                            )
-                        }
-
-                        FloatingActionButton(
-                            onClick = { /* Ekleme */ },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.add_24px),
-                                contentDescription = "Adicionar"
-                            )
-                        }
-                    }
-                }
-            }
-        ) { scaffoldPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(scaffoldPadding)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                    .background(MaterialTheme.colorScheme.background)
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = { focusManager.clearFocus() })
-                    }
-            ) {
-                if (isOnline && !isLoading) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { viewModel.setSearchQuery(it) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp),
-                            placeholder = { Text("Pesquisar...", fontSize = 14.sp) }, 
-                            leadingIcon = { 
+                            ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.search_24px),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                ) 
-                            },
-                            singleLine = true,
-                            shape = RoundedCornerShape(8.dp),
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Go
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onGo = { focusManager.clearFocus() }
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        )
-
-                        Box(modifier = Modifier.width(140.dp)) {
-                            OutlinedCard(
-                                onClick = { dropdownExpanded = true },
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.height(56.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                                colors = CardDefaults.outlinedCardColors(containerColor = Color.Transparent)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(start = 12.dp, end = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = selectedSubCategory,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    
-                                    val arrowIcon = if (dropdownExpanded) R.drawable.arrow_drop_up_24px else R.drawable.arrow_drop_down_24px
-                                    Icon(
-                                        painter = painterResource(id = arrowIcon),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            DropdownMenu(
-                                expanded = dropdownExpanded,
-                                onDismissRequest = { dropdownExpanded = false },
-                                modifier = Modifier
-                                    .width(140.dp)
-                                    .heightIn(max = 280.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            ) {
-                                subCategories.forEach { category ->
-                                    DropdownMenuItem(
-                                        text = { 
-                                            Text(
-                                                text = category, 
-                                                fontSize = 13.sp,
-                                                fontWeight = if (selectedSubCategory == category) FontWeight.Bold else FontWeight.Normal,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            ) 
-                                        },
-                                        onClick = {
-                                            viewModel.setSubCategory(category)
-                                            dropdownExpanded = false
-                                        },
-                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (!isOnline) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(24.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.wifi_off_24px),
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Sem conexão",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Verifique sua internet.",
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    } else if (isLoading && games.isEmpty()) {
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = 320.dp),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(18.dp),
-                            horizontalArrangement = Arrangement.spacedBy(18.dp)
-                        ) {
-                            items(8) {
-                                ShimmerGameCardItem()
-                            }
-                        }
-                    } else if (games.isEmpty()) {
-                        Text(
-                            text = "Nenhum item encontrado.",
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(32.dp),
-                            fontSize = 15.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        val limitedGames = games.take(visibleItemsCount)
-
-                        LazyVerticalGrid(
-                            state = gridState,
-                            columns = GridCells.Adaptive(minSize = 320.dp),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(18.dp),
-                            horizontalArrangement = Arrangement.spacedBy(18.dp)
-                        ) {
-                            items(limitedGames, key = { it.id }) { game ->
-                                GameCard(
-                                    game = game,
-                                    isAdminMode = isUserAdmin,
-                                    onLinkClick = { url ->
-                                        try {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                            context.startActivity(intent)
-                                        } catch (_: Exception) {}
-                                    }
+                                    painter = painterResource(id = R.drawable.delete_sweep_24px),
+                                    contentDescription = "Limpar"
                                 )
                             }
 
-                            if (games.size > visibleItemsCount) {
-                                item(span = { GridItemSpan(maxCurrentLineSpan) }) {
-                                    Box(
+                            FloatingActionButton(
+                                onClick = { /* Ekleme */ },
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.add_24px),
+                                    contentDescription = "Adicionar"
+                                )
+                            }
+                        }
+                    }
+                }
+            ) { scaffoldPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(scaffoldPadding)
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                        .background(Color.Transparent)
+                        .pointerInput(Unit) {
+                            detectTapGestures(onTap = { focusManager.clearFocus() })
+                        }
+                ) {
+                    if (isOnline && !isLoading) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { viewModel.setSearchQuery(it) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(56.dp),
+                                placeholder = { Text("Pesquisar...", fontSize = 14.sp) }, 
+                                leadingIcon = { 
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.search_24px),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    ) 
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(8.dp),
+                                keyboardOptions = KeyboardOptions(
+                                    imeAction = ImeAction.Go
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onGo = { focusManager.clearFocus() }
+                                ),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+
+                            Box(modifier = Modifier.width(140.dp)) {
+                                OutlinedCard(
+                                    onClick = { dropdownExpanded = true },
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.height(56.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                    colors = CardDefaults.outlinedCardColors(containerColor = Color.Transparent)
+                                ) {
+                                    Row(
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 16.dp, bottom = 28.dp),
-                                        contentAlignment = Alignment.Center
+                                            .fillMaxSize()
+                                            .padding(start = 12.dp, end = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Button(
-                                            onClick = { visibleItemsCount += 8 },
+                                        Text(
+                                            text = selectedSubCategory,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        
+                                        val arrowIcon = if (dropdownExpanded) R.drawable.arrow_drop_up_24px else R.drawable.arrow_drop_down_24px
+                                        Icon(
+                                            painter = painterResource(id = arrowIcon),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                DropdownMenu(
+                                    expanded = dropdownExpanded,
+                                    onDismissRequest = { dropdownExpanded = false },
+                                    modifier = Modifier
+                                        .width(140.dp)
+                                        .heightIn(max = 280.dp)
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                ) {
+                                    subCategories.forEach { category ->
+                                        DropdownMenuItem(
+                                            text = { 
+                                                Text(
+                                                    text = category, 
+                                                    fontSize = 13.sp,
+                                                    fontWeight = if (selectedSubCategory == category) FontWeight.Bold else FontWeight.Normal,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                ) 
+                                            },
+                                            onClick = {
+                                                viewModel.setSubCategory(category)
+                                                dropdownExpanded = false
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (!isOnline) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.wifi_off_24px),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Sem conexão",
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Verifique sua internet.",
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        } else if (isLoading && games.isEmpty()) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Adaptive(minSize = 320.dp),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(18.dp),
+                                horizontalArrangement = Arrangement.spacedBy(18.dp)
+                            ) {
+                                items(8) {
+                                    ShimmerGameCardItem()
+                                }
+                            }
+                        } else if (games.isEmpty()) {
+                            Text(
+                                text = "Nenhum item encontrado.",
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .padding(32.dp),
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        } else {
+                            val limitedGames = games.take(visibleItemsCount)
+
+                            LazyVerticalGrid(
+                                state = gridState,
+                                columns = GridCells.Adaptive(minSize = 320.dp),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(18.dp),
+                                horizontalArrangement = Arrangement.spacedBy(18.dp)
+                            ) {
+                                items(limitedGames, key = { it.id }) { game ->
+                                    GameCard(
+                                        game = game,
+                                        isAdminMode = isUserAdmin,
+                                        onLinkClick = { url ->
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                                context.startActivity(intent)
+                                            } catch (_: Exception) {}
+                                        }
+                                    )
+                                }
+
+                                if (games.size > visibleItemsCount) {
+                                    item(span = { GridItemSpan(maxCurrentLineSpan) }) {
+                                        Box(
                                             modifier = Modifier
-                                                .wrapContentWidth()
-                                                .height(48.dp),
-                                            shape = RoundedCornerShape(99.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.primary,
-                                                contentColor = MaterialTheme.colorScheme.onPrimary
-                                            ),
-                                            contentPadding = PaddingValues(horizontal = 32.dp)
+                                                .fillMaxWidth()
+                                                .padding(top = 16.dp, bottom = 28.dp),
+                                            contentAlignment = Alignment.Center
                                         ) {
-                                            Text(
-                                                text = "Mostrar Mais",
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
+                                            Button(
+                                                onClick = { visibleItemsCount += 8 },
+                                                modifier = Modifier
+                                                    .wrapContentWidth()
+                                                    .height(48.dp),
+                                                shape = RoundedCornerShape(99.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.primary,
+                                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                                ),
+                                                contentPadding = PaddingValues(horizontal = 32.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Mostrar Mais",
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -866,11 +872,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     }
                 }
             }
-        }
-    }
-
-        if (isCalculatedDark && starsEnabled) {
-            StarsEffectComponent()
         }
     }
 }
@@ -925,7 +926,7 @@ fun GameCard(game: Game, isAdminMode: Boolean, onLinkClick: (String) -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(165.dp)
+                    .aspectRatio(16f / 9f)
             ) {
                 if (!game.banner.isNullOrEmpty()) {
                     AsyncImage(
