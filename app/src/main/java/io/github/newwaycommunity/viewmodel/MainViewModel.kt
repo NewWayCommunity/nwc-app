@@ -143,4 +143,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         activeListener = listener
         database.child(section).addValueEventListener(listener)
     }
+
+    fun saveGame(game: Game, onComplete: (Boolean) -> Unit) {
+        val section = _currentSection.value
+        val gameRef = if (game.id.isBlank()) {
+            database.child(section).push()
+        } else {
+            database.child(section).child(game.id)
+        }
+
+        val gameData = mapOf(
+            "name" to game.name,
+            "desc" to game.desc,
+            "category" to game.category,
+            "banner" to game.banner,
+            "pinned" to game.pinned,
+            "createdAt" to game.createdAt,
+            "linkObjects" to game.linkObjects.map { mapOf("label" to it.label, "url" to it.url) },
+            "links" to game.linkObjects.map { it.url }
+        )
+
+        gameRef.setValue(gameData)
+            .addOnSuccessListener { onComplete(true) }
+            .addOnFailureListener { onComplete(false) }
+    }
+
+    fun deleteGame(id: String, onComplete: (Boolean) -> Unit) {
+        database.child(_currentSection.value).child(id).removeValue()
+            .addOnSuccessListener { onComplete(true) }
+            .addOnFailureListener { onComplete(false) }
+    }
+
+    fun deleteAllGames(onComplete: (Boolean) -> Unit) {
+        database.child(_currentSection.value).removeValue()
+            .addOnSuccessListener { onComplete(true) }
+            .addOnFailureListener { onComplete(false) }
+    }
 }

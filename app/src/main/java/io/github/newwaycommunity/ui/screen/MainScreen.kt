@@ -53,6 +53,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import io.github.newwaycommunity.R
 import io.github.newwaycommunity.model.Game
+import io.github.newwaycommunity.model.LinkObject
 import io.github.newwaycommunity.util.UpdateUtil
 import io.github.newwaycommunity.viewmodel.MainViewModel
 import java.net.HttpURLConnection
@@ -101,6 +102,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
 
     var showLoginDialog by remember { mutableStateOf(false) }
     var showFormDialog by remember { mutableStateOf(false) }
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
     var selectedGameForEdit by remember { mutableStateOf<Game?>(null) }
     var isUserLoggedInSimulated by remember { mutableStateOf(false) }
 
@@ -114,7 +116,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
     SideEffect {
         val window = (context as? Activity)?.window
         if (window != null) {
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isCalculatedDark
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isAppearanceLightStatusBars
         }
     }
 
@@ -325,8 +327,54 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     }
                 }
             },
-            confirmButton = { Button(onClick = { showFormDialog = false; Toast.makeText(context, "Salvo!", Toast.LENGTH_SHORT).show() }) { Text("Salvar") } },
+            confirmButton = {
+                Button(onClick = {
+                    if (name.isBlank()) return@Button
+                    
+                    val gameToSave = Game(
+                        id = selectedGameForEdit?.id ?: "",
+                        name = name.trim(),
+                        desc = desc.trim(),
+                        category = if (category.isBlank()) "Geral" else category.trim(),
+                        banner = bannerUrl.trim().ifBlank { null },
+                        pinned = isPinned,
+                        createdAt = selectedGameForEdit?.createdAt ?: System.currentTimeMillis(),
+                        linkObjects = dynamicLinks.filter { it.label.isNotBlank() && it.url.isNotBlank() }.map { LinkObject(it.label.trim(), it.url.trim()) }
+                    )
+                    
+                    viewModel.saveGame(gameToSave) { success ->
+                        if (success) {
+                            Toast.makeText(context, "Salvo no Firebase!", Toast.LENGTH_SHORT).show()
+                            showFormDialog = false
+                        } else {
+                            Toast.makeText(context, "Erro ao salvar!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }) { Text("Salvar") }
+            },
             dismissButton = { TextButton(onClick = { showFormDialog = false }) { Text("Cancelar") } }
+        )
+    }
+
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text("Apagar Tudo", fontWeight = FontWeight.Bold) },
+            text = { Text("Tem certeza de que deseja apagar TODOS os itens desta seção? Esta ação não pode ser desfeita.") },
+            confirmButton = {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    onClick = {
+                        viewModel.deleteAllGames { success ->
+                            if (success) {
+                                Toast.makeText(context, "Seção limpa com sucesso!", Toast.LENGTH_SHORT).show()
+                                showDeleteAllDialog = false
+                            }
+                        }
+                    }
+                ) { Text("Sim, Apagar Tudo") }
+            },
+            dismissButton = { TextButton(onClick = { showDeleteAllDialog = false }) { Text("Cancelar") } }
         )
     }
 
@@ -418,7 +466,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                 floatingActionButton = {
                     if (isUserLoggedInSimulated) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            FloatingActionButton(onClick = { Toast.makeText(context, "Limpo!", Toast.LENGTH_SHORT).show() }, containerColor = MaterialTheme.colorScheme.errorContainer) { Icon(painterResource(R.drawable.delete_sweep_24px), "Limpar") }
+                            FloatingActionButton(onClick = { showDeleteAllDialog = true }, containerColor = MaterialTheme.colorScheme.errorContainer) { Icon(painterResource(R.drawable.delete_sweep_24px), "Limpar") }
                             FloatingActionButton(onClick = { selectedGameForEdit = null; showFormDialog = true }, containerColor = MaterialTheme.colorScheme.primaryContainer) { Icon(painterResource(R.drawable.add_24px), "Adicionar") }
                         }
                     }
@@ -509,7 +557,11 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                         isAdminMode = isUserLoggedInSimulated,
                                         onLinkClick = { url -> context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }, 
                                         onEditClick = { selectedGameForEdit = game; showFormDialog = true }, 
-                                        onDeleteClick = { Toast.makeText(context, "Deletado!", Toast.LENGTH_SHORT).show() }
+                                        onDeleteClick = { 
+                                            viewModel.deleteGame(game.id) { success ->
+                                                if (success) Toast.makeText(context, "Item deletado!", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
                                     )
                                 }
                                 if (games.size > visibleItemsCount) {
