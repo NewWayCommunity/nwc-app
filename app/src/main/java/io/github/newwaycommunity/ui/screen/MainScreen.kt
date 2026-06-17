@@ -31,7 +31,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -207,9 +206,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                             keyboardType = KeyboardType.Email,
                             imeAction = ImeAction.Next
                         ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Next) }
-                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -276,7 +272,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Column {
-                        OutlinedTextField(value = name, onValueChange = { if (it.length <= 30) name = it }, label = { Text("Nome") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }))
+                        OutlinedTextField(value = name, onValueChange = { if (it.length <= 30) name = it }, label = { Text("Nome") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                         Text(text = "${name.length} / 30", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     Column {
@@ -284,7 +280,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         Text(text = "${desc.length} / 60", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     Column {
-                        OutlinedTextField(value = category, onValueChange = { if (it.length <= 20) category = it }, label = { Text("Categoria (Ex: Ação, RPG)") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }))
+                        OutlinedTextField(value = category, onValueChange = { if (it.length <= 20) category = it }, label = { Text("Categoria (Ex: Ação, RPG)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                         Text(text = "${category.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     
@@ -293,11 +289,11 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         Card(modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                             Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Column {
-                                    OutlinedTextField(value = link.label, onValueChange = { if (it.length <= 20) { link.label = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(label = it) } }, label = { Text("Nome do link *") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }))
+                                    OutlinedTextField(value = link.label, onValueChange = { if (it.length <= 20) { link.label = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(label = it) } }, label = { Text("Nome do link *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                                     Text(text = "${link.label.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedTextField(value = link.url, onValueChange = { link.url = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(url = it) }, label = { Text("URL *") }, singleLine = true, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }))
+                                    OutlinedTextField(value = link.url, onValueChange = { link.url = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(url = it) }, label = { Text("URL *") }, singleLine = true, modifier = Modifier.weight(1f))
                                     IconButton(onClick = { dynamicLinks.remove(link) }) {
                                         Icon(painter = painterResource(id = R.drawable.delete_24px), contentDescription = "Remover Link", tint = MaterialTheme.colorScheme.error)
                                     }
@@ -320,9 +316,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         label = { Text("URL do Banner (Imgur)") },
                         leadingIcon = { Icon(painter = painterResource(id = R.drawable.image_24px), contentDescription = null) },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-                        keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() })
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = isPinned, onCheckedChange = { isPinned = it })
@@ -370,7 +364,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                     modes.forEachIndexed { index, iconRes ->
                                         val isSelected = selectedThemeMode == index
                                         Surface(shape = CircleShape, color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, modifier = Modifier.size(34.dp).clickable { viewModel.setThemeMode(index) }) {
-                                            Box(contentAlignment = Alignment.Center) { Icon(painter = painterResource(id = index), contentDescription = null, modifier = Modifier.size(18.dp), tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant) }
+                                            Box(contentAlignment = Alignment.Center) { Icon(painter = painterResource(id = iconRes), contentDescription = null, modifier = Modifier.size(18.dp), tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant) }
                                         }
                                     }
                                 }
