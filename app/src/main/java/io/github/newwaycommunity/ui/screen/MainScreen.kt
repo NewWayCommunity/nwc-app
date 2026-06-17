@@ -31,6 +31,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -379,7 +380,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp).clickable { viewModel.setMonetEnabled(!monetEnabled) }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text("Cores dinâmicas", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                                Switch(checked = monetEnabled, onCheckedChange = { viewModel.setMonetEnabled(it) }, modifier = Modifier.graphicsLayer(scaleX = 0.8f, scaleY = 0.8f))
+                                Switch(checked = monetEnabled, onCheckedChange = { monetEnabled = it; sharedPreferences.edit().putBoolean("stars_enabled", it).apply() }, modifier = Modifier.graphicsLayer(scaleX = 0.8f, scaleY = 0.8f))
                             }
                         }
                     }
@@ -428,6 +429,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .height(IntrinsicSize.Min)
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -437,7 +439,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                 onValueChange = { viewModel.setSearchQuery(it) },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(56.dp),
+                                    .fillMaxHeight(),
                                 label = { Text("Pesquisar...") },
                                 leadingIcon = { Icon(painterResource(R.drawable.search_24px), null) },
                                 singleLine = true,
@@ -445,25 +447,31 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                 keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() })
                             )
                             
-                            ExposedDropdownMenuBox(
-                                expanded = dropdownExpanded,
-                                onExpandedChange = { dropdownExpanded = !dropdownExpanded },
-                                modifier = Modifier.width(140.dp)
-                            ) {
-                                OutlinedTextField(
-                                    value = selectedSubCategory,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("Filtro") },
-                                    trailingIcon = { 
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) 
-                                    },
-                                    singleLine = true,
+                            Box(modifier = Modifier.width(140.dp).fillMaxHeight()) {
+                                Box(
                                     modifier = Modifier
-                                        .menuAnchor()
-                                        .height(56.dp)
-                                        .fillMaxWidth()
-                                )
+                                        .fillMaxSize()
+                                        .clickable { dropdownExpanded = !dropdownExpanded }
+                                ) {
+                                    OutlinedTextField(
+                                        value = selectedSubCategory,
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        enabled = false,
+                                        label = { Text("Filtro") },
+                                        trailingIcon = { 
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) 
+                                        },
+                                        singleLine = true,
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                        ),
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                                 
                                 ExposedDropdownMenu(
                                     expanded = dropdownExpanded,
