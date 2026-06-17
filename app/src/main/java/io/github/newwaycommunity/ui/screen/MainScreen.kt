@@ -438,6 +438,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // VARSAYILAN DEFAULT MALZEME ŞEKLİ KORUNDU (RoundedCornerShape KORUMASI KALDIRILDI)
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { viewModel.setSearchQuery(it) },
@@ -447,7 +448,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                 label = { Text("Pesquisar...") },
                                 leadingIcon = { Icon(painterResource(R.drawable.search_24px), null) },
                                 singleLine = true,
-                                shape = OutlinedTextFieldDefaults.shape,
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                                 keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() })
                             )
@@ -466,7 +466,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) 
                                     },
                                     singleLine = true,
-                                    shape = OutlinedTextFieldDefaults.shape,
                                     modifier = Modifier
                                         .menuAnchor()
                                         .height(56.dp)
