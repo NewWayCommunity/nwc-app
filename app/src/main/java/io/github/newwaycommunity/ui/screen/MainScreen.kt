@@ -99,6 +99,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
     var showLoginDialog by remember { mutableStateOf(false) }
     var showFormDialog by remember { mutableStateOf(false) }
     var selectedGameForEdit by remember { mutableStateOf<Game?>(null) }
+    var isUserLoggedInSimulated by remember { mutableStateOf(false) }
 
     val isCalculatedDark = when (selectedThemeMode) {
         0 -> false
@@ -170,11 +171,17 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             title = { Text("Acesso Administrativo", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Senha") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Senha") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
                 }
             },
-            confirmButton = { Button(onClick = { showLoginDialog = false; Toast.makeText(context, "Autenticado!", Toast.LENGTH_SHORT).show() }) { Text("Entrar") } },
+            confirmButton = {
+                Button(onClick = {
+                    showLoginDialog = false
+                    isUserLoggedInSimulated = true
+                    Toast.makeText(context, "Autenticado com sucesso!", Toast.LENGTH_SHORT).show()
+                }) { Text("Entrar") }
+            },
             dismissButton = { TextButton(onClick = { showLoginDialog = false }) { Text("Cancelar") } }
         )
     }
@@ -191,10 +198,17 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             title = { Text(if (selectedGameForEdit != null) "Editar Item" else "Adicionar Item", fontWeight = FontWeight.Bold) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome (Máx 30)") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = desc, onValueChange = { desc = it }, label = { Text("Descrição (Máx 60)") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoria") }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = bannerUrl, onValueChange = { bannerUrl = it }, label = { Text("URL do Banner") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = name, onValueChange = { if (it.length <= 30) name = it }, label = { Text("Nome (Máx 30)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = desc, onValueChange = { if (it.length <= 60) desc = it }, label = { Text("Descrição (Máx 60)") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = category, onValueChange = { if (it.length <= 20) category = it }, label = { Text("Categoria (Ex: Ação, RPG)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = bannerUrl,
+                        onValueChange = { bannerUrl = it },
+                        label = { Text("URL do Banner (Imgur)") },
+                        leadingIcon = { Icon(painter = painterResource(id = R.drawable.image_24px), contentDescription = null) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = isPinned, onCheckedChange = { isPinned = it })
                         Text("Fixar no topo", modifier = Modifier.padding(start = 8.dp))
@@ -212,7 +226,11 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
-                ModalDrawerSheet(modifier = Modifier.width(300.dp), drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+                ModalDrawerSheet(
+                    modifier = Modifier.width(300.dp),
+                    drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Top + WindowInsetsSides.Bottom)
+                ) {
                     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text("New Way Community", modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), fontSize = 20.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
@@ -228,9 +246,32 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                        
                         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("Tema", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHighest, modifier = Modifier.height(38.dp)) {
+                                Row(modifier = Modifier.padding(2.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    val modes = listOf(R.drawable.light_mode_24px, R.drawable.brightness_auto_24px, R.drawable.dark_mode_24px)
+                                    modes.forEachIndexed { index, iconRes ->
+                                        val isSelected = selectedThemeMode == index
+                                        Surface(shape = CircleShape, color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, modifier = Modifier.size(34.dp).clickable { viewModel.setThemeMode(index) }) {
+                                            Box(contentAlignment = Alignment.Center) { Icon(painter = painterResource(id = iconRes), contentDescription = null, modifier = Modifier.size(18.dp), tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant) }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp).clickable { starsEnabled = !starsEnabled; sharedPreferences.edit().putBoolean("stars_enabled", starsEnabled).apply() }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text("Efeito de estrelas", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             Switch(checked = starsEnabled, onCheckedChange = { starsEnabled = it; sharedPreferences.edit().putBoolean("stars_enabled", it).apply() }, modifier = Modifier.graphicsLayer(scaleX = 0.8f, scaleY = 0.8f))
+                        }
+
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp).clickable { viewModel.setMonetEnabled(!monetEnabled) }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text("Cores dinâmicas", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                Switch(checked = monetEnabled, onCheckedChange = { viewModel.setMonetEnabled(it) }, modifier = Modifier.graphicsLayer(scaleX = 0.8f, scaleY = 0.8f))
+                            }
                         }
                     }
                 }
@@ -244,9 +285,21 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         title = { Text(menuItems.find { it.first == currentSection }?.second ?: "NWC", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                         navigationIcon = { IconButton(onClick = { scope.launch { drawerState.open() } }) { Icon(painterResource(R.drawable.menu_24px), "Menu") } },
                         actions = {
-                            IconButton(onClick = { showLoginDialog = true }) { Icon(painterResource(R.drawable.image_24px), "Admin") }
                             IconButton(onClick = { isMusicPlaying = !isMusicPlaying; sharedPreferences.edit().putBoolean("music_enabled", isMusicPlaying).apply(); try { if (isMusicPlaying) mediaPlayer.start() else mediaPlayer.pause() } catch (_: Exception) {} }) { Icon(painterResource(if (isMusicPlaying) R.drawable.music_note_24px else R.drawable.music_off_24px), "Música") }
                             IconButton(onClick = { try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://discord.gg/W5DUnEUgtj"))) } catch (_: Exception) {} }) { Icon(painterResource(R.drawable.discord_24px), "Discord") }
+                            IconButton(onClick = {
+                                if (isUserLoggedInSimulated) {
+                                    isUserLoggedInSimulated = false
+                                    Toast.makeText(context, "Log-out efetuado!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    showLoginDialog = true
+                                }
+                            }) {
+                                Icon(
+                                    painter = painterResource(id = if (isUserLoggedInSimulated) R.drawable.logout_24px else R.drawable.admin_panel_settings_24px),
+                                    contentDescription = "Admin"
+                                )
+                            }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                     )
@@ -275,9 +328,20 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                             }
                         }
                     }
+                    
                     Box(modifier = Modifier.fillMaxSize()) {
-                        if (isLoading && games.isEmpty()) {
+                        if (!isOnline) {
+                            Column(modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(painter = painterResource(id = R.drawable.wifi_off_24px), contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.error)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(text = "Sem conexão", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = "Verifique sua internet.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                            }
+                        } else if (isLoading && games.isEmpty()) {
                             LazyVerticalGrid(columns = GridCells.Adaptive(320.dp), modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) { items(8) { ShimmerGameCardItem() } }
+                        } else if (games.isEmpty()) {
+                            Text(text = "Nenhum item encontrado.", modifier = Modifier.align(Alignment.Center).padding(32.dp), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                         } else {
                             val limitedGames = games.take(visibleItemsCount)
                             LazyVerticalGrid(state = gridState, columns = GridCells.Adaptive(320.dp), modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
