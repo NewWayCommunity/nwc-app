@@ -75,7 +75,13 @@ fun ShimmerGameCardItem() {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun GameCard(game: Game, onLinkClick: (String) -> Unit, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
+fun GameCard(
+    game: Game,
+    isAdminMode: Boolean,
+    onLinkClick: (String) -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
     val cardBorder = if (game.pinned) {
         BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
     } else {
@@ -96,9 +102,11 @@ fun GameCard(game: Game, onLinkClick: (String) -> Unit, onEditClick: () -> Unit,
                 } else {
                     Box(modifier = Modifier.fillMaxSize().background(Brush.linearGradient(colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.tertiaryContainer))))
                 }
-                Row(modifier = Modifier.align(Alignment.TopStart).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    FilledIconButton(onClick = onEditClick, modifier = Modifier.size(32.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Icon(painter = painterResource(id = R.drawable.edit_24px), contentDescription = "Editar", modifier = Modifier.size(16.dp)) }
-                    FilledIconButton(onClick = onDeleteClick, modifier = Modifier.size(32.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)) { Icon(painter = painterResource(id = R.drawable.delete_24px), contentDescription = "Deletar", modifier = Modifier.size(16.dp)) }
+                if (isAdminMode) {
+                    Row(modifier = Modifier.align(Alignment.TopStart).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        FilledIconButton(onClick = onEditClick, modifier = Modifier.size(32.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Icon(painter = painterResource(id = R.drawable.edit_24px), contentDescription = "Editar", modifier = Modifier.size(16.dp)) }
+                        FilledIconButton(onClick = onDeleteClick, modifier = Modifier.size(32.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)) { Icon(painter = painterResource(id = R.drawable.delete_24px), contentDescription = "Deletar", modifier = Modifier.size(16.dp)) }
+                    }
                 }
                 if (game.pinned) {
                     Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(32.dp)) { Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(painter = painterResource(id = R.drawable.keep_24px), contentDescription = "Fixar", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary) } }
