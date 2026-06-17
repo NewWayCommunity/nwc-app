@@ -158,8 +158,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         firebaseAuth.signInWithEmailAndPassword(email, pass)
-            .addOnSuccessListener { onResult(true, null) }
-            .addOnFailureListener { onResult(false, it.message) }
+            .addOnSuccessListener { _ -> onResult(true, null) }
+            .addOnFailureListener { exception -> onResult(false, exception.message) }
     }
 
     fun saveGame(game: Game, onComplete: (Boolean) -> Unit) {

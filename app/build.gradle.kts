@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.newwaycommunity"
         minSdk = 24
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.2.2"
+        versionCode = 11
+        versionName = "2.0.0"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -78,6 +78,7 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
     implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
 
     implementation("io.coil-kt:coil-compose:2.6.0")
 }
