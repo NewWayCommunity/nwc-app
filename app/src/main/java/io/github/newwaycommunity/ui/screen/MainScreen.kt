@@ -149,6 +149,13 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
 
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
 
+    LaunchedEffect(currentSection, searchQuery, selectedSubCategory) {
+        visibleItemsCount = 8
+        if (games.isNotEmpty()) {
+            gridState.scrollToItem(0)
+        }
+    }
+
     val subCategories = remember(rawGames) {
         val list = mutableListOf("Todas")
         rawGames.forEach { if (it.category.isNotBlank() && !list.contains(it.category)) list.add(it.category) }
@@ -377,8 +384,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                 label = { Text("Pesquisar...") },
                                 leadingIcon = { Icon(painterResource(R.drawable.search_24px), null) },
                                 singleLine = true,
-                                shape = RoundedCornerShape(8.dp),
-                                colors = OutlinedTextFieldDefaults.colors()
+                                shape = RoundedCornerShape(8.dp)
                             )
                             
                             ExposedDropdownMenuBox(
@@ -399,13 +405,13 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                     modifier = Modifier
                                         .menuAnchor()
                                         .height(56.dp)
-                                        .fillMaxWidth(),
-                                    colors = OutlinedTextFieldDefaults.colors()
+                                        .fillMaxWidth()
                                 )
                                 
                                 ExposedDropdownMenu(
                                     expanded = dropdownExpanded,
-                                    onDismissRequest = { dropdownExpanded = false }
+                                    onDismissRequest = { dropdownExpanded = false },
+                                    modifier = Modifier.heightIn(max = 250.dp)
                                 ) {
                                     subCategories.forEach { category ->
                                         DropdownMenuItem(
