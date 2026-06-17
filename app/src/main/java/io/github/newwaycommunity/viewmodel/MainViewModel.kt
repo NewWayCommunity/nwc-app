@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.newwaycommunity.model.Game
 import io.github.newwaycommunity.util.ConnectivityObserver
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
@@ -23,6 +24,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     private val database = Firebase.database.reference
     private val connectivityObserver = ConnectivityObserver(application)
+    private val firebaseAuth = FirebaseAuth.getInstance()
     
     private val sharedPrefs = application.getSharedPreferences("nwc_settings", Context.MODE_PRIVATE)
     
@@ -142,6 +144,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         
         activeListener = listener
         database.child(section).addValueEventListener(listener)
+    }
+
+    fun signInAdmin(email: String, pass: String, onResult: (Boolean, String?) -> Unit) {
+        if (email.isBlank() || pass.isBlank()) {
+            onResult(false, "Preencha todos os campos.")
+            return
+        }
+        val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+        if (!email.trim().matches(emailPattern.toRegex())) {
+            onResult(false, "E-mail inválido.")
+            return
+        }
+
+        firebaseAuth.signInWithEmailAndPassword(email, pass)
+            .addOnSuccessListener { onResult(true, null) }
+            .addOnFailureListener { onResult(false, it.message) }
     }
 
     fun saveGame(game: Game, onComplete: (Boolean) -> Unit) {

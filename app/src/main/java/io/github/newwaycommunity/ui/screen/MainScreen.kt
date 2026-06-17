@@ -103,6 +103,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
     var showLoginDialog by remember { mutableStateOf(false) }
     var showFormDialog by remember { mutableStateOf(false) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
+    var gameToDelete by remember { mutableStateOf<Game?>(null) }
     var selectedGameForEdit by remember { mutableStateOf<Game?>(null) }
     var isUserLoggedInSimulated by remember { mutableStateOf(false) }
 
@@ -222,15 +223,15 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         ),
                         keyboardActions = KeyboardActions(
                             onGo = {
-                                val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
-                                if (!email.trim().matches(emailPattern.toRegex())) {
-                                    emailError = true
-                                    emailErrorText = "E-mail inválido."
-                                } else {
-                                    focusManager.clearFocus()
-                                    showLoginDialog = false
-                                    isUserLoggedInSimulated = true
-                                    Toast.makeText(context, "Autenticado com sucesso!", Toast.LENGTH_SHORT).show()
+                                viewModel.signInAdmin(email, password) { success, error ->
+                                    if (success) {
+                                        showLoginDialog = false
+                                        isUserLoggedInSimulated = true
+                                        Toast.makeText(context, "Autenticado!", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        emailError = true
+                                        emailErrorText = error ?: "Erro ao entrar."
+                                    }
                                 }
                             }
                         ),
@@ -240,14 +241,15 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             },
             confirmButton = {
                 Button(onClick = {
-                    val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
-                    if (!email.trim().matches(emailPattern.toRegex())) {
-                        emailError = true
-                        emailErrorText = "E-mail inválido."
-                    } else {
-                        showLoginDialog = false
-                        isUserLoggedInSimulated = true
-                        Toast.makeText(context, "Autenticado com sucesso!", Toast.LENGTH_SHORT).show()
+                    viewModel.signInAdmin(email, password) { success, error ->
+                        if (success) {
+                            showLoginDialog = false
+                            isUserLoggedInSimulated = true
+                            Toast.makeText(context, "Autenticado!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            emailError = true
+                            emailErrorText = error ?: "Erro ao entrar."
+                        }
                     }
                 }) { Text("Entrar") }
             },
@@ -455,6 +457,26 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         )
     }
 
+    if (gameToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { gameToDelete = null },
+            title = { Text("Deletar jogo?", fontWeight = FontWeight.Bold) },
+            text = { Text("Tem certeza que deseja deletar '${gameToDelete?.name}'? Esta ação é irreversível.") },
+            confirmButton = {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    onClick = {
+                        viewModel.deleteGame(gameToDelete!!.id) { success ->
+                            if (success) Toast.makeText(context, "Deletado!", Toast.LENGTH_SHORT).show()
+                            gameToDelete = null
+                        }
+                    }
+                ) { Text("Deletar") }
+            },
+            dismissButton = { TextButton(onClick = { gameToDelete = null }) { Text("Cancelar") } }
+        )
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         if (isCalculatedDark && starsEnabled) { StarsEffectComponent() }
 
@@ -634,11 +656,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                         isAdminMode = isUserLoggedInSimulated,
                                         onLinkClick = { url -> context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }, 
                                         onEditClick = { selectedGameForEdit = game; showFormDialog = true }, 
-                                        onDeleteClick = { 
-                                            viewModel.deleteGame(game.id) { success ->
-                                                if (success) Toast.makeText(context, "Item deletado!", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
+                                        onDeleteClick = { gameToDelete = game }
                                     )
                                 }
                                 if (games.size > visibleItemsCount) {
