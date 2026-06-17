@@ -29,6 +29,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -39,6 +40,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -175,20 +177,72 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
     if (showLoginDialog) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        var emailError by remember { mutableStateOf(false) }
+        var emailErrorText by remember { mutableStateOf("") }
+
         AlertDialog(
             onDismissRequest = { showLoginDialog = false },
             title = { Text("Acesso Administrativo", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go), keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() }))
-                    OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Senha") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go), keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() }))
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { 
+                            email = it
+                            emailError = false
+                            emailErrorText = ""
+                        },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        isError = emailError,
+                        supportingText = { if (emailError) Text(emailErrorText) },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Senha") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Go
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onGo = {
+                                val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+                                if (!email.trim().matches(emailPattern.toRegex())) {
+                                    emailError = true
+                                    emailErrorText = "E-mail inválido."
+                                } else {
+                                    focusManager.clearFocus()
+                                    showLoginDialog = false
+                                    isUserLoggedInSimulated = true
+                                    Toast.makeText(context, "Autenticado com sucesso!", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             },
             confirmButton = {
                 Button(onClick = {
-                    showLoginDialog = false
-                    isUserLoggedInSimulated = true
-                    Toast.makeText(context, "Autenticado com sucesso!", Toast.LENGTH_SHORT).show()
+                    val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+                    if (!email.trim().matches(emailPattern.toRegex())) {
+                        emailError = true
+                        emailErrorText = "E-mail inválido."
+                    } else {
+                        showLoginDialog = false
+                        isUserLoggedInSimulated = true
+                        Toast.makeText(context, "Autenticado com sucesso!", Toast.LENGTH_SHORT).show()
+                    }
                 }) { Text("Entrar") }
             },
             dismissButton = { TextButton(onClick = { showLoginDialog = false }) { Text("Cancelar") } }
@@ -215,28 +269,28 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Column {
-                        OutlinedTextField(value = name, onValueChange = { if (it.length <= 30) name = it }, label = { Text("Nome") }, singleLine = true, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go), keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() }))
+                        OutlinedTextField(value = name, onValueChange = { if (it.length <= 30) name = it }, label = { Text("Nome") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
                         Text(text = "${name.length} / 30", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     Column {
-                        OutlinedTextField(value = desc, onValueChange = { if (it.length <= 60) desc = it }, label = { Text("Descrição") }, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = desc, onValueChange = { if (it.length <= 60) desc = it }, label = { Text("Descrição") }, modifier = Modifier.fillMaxWidth())
                         Text(text = "${desc.length} / 60", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     Column {
-                        OutlinedTextField(value = category, onValueChange = { if (it.length <= 20) category = it }, label = { Text("Categoria (Ex: Ação, RPG)") }, singleLine = true, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go), keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() }))
+                        OutlinedTextField(value = category, onValueChange = { if (it.length <= 20) category = it }, label = { Text("Categoria (Ex: Ação, RPG)") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
                         Text(text = "${category.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     
                     Text("Links (Máx. 4)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     dynamicLinks.forEach { link ->
-                        Card(modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), shape = RoundedCornerShape(4.dp)) {
+                        Card(modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                             Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Column {
-                                    OutlinedTextField(value = link.label, onValueChange = { if (it.length <= 20) { link.label = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(label = it) } }, label = { Text("Nome do link *") }, singleLine = true, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go), keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() }))
+                                    OutlinedTextField(value = link.label, onValueChange = { if (it.length <= 20) { link.label = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(label = it) } }, label = { Text("Nome do link *") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
                                     Text(text = "${link.label.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedTextField(value = link.url, onValueChange = { link.url = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(url = it) }, label = { Text("URL *") }, singleLine = true, shape = RoundedCornerShape(4.dp), modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go), keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() }))
+                                    OutlinedTextField(value = link.url, onValueChange = { link.url = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(url = it) }, label = { Text("URL *") }, singleLine = true, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
                                     IconButton(onClick = { dynamicLinks.remove(link) }) {
                                         Icon(painter = painterResource(id = R.drawable.delete_24px), contentDescription = "Remover Link", tint = MaterialTheme.colorScheme.error)
                                     }
@@ -259,7 +313,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         label = { Text("URL do Banner (Imgur)") },
                         leadingIcon = { Icon(painter = painterResource(id = R.drawable.image_24px), contentDescription = null) },
                         singleLine = true,
-                        shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                         keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() })
@@ -357,7 +410,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                 )
                             }
                         },
-                        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f), titleContentColor = MaterialTheme.colorScheme.onSurface)
                     )
                 },
                 floatingActionButton = {
@@ -387,7 +440,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                 label = { Text("Pesquisar...") },
                                 leadingIcon = { Icon(painterResource(R.drawable.search_24px), null) },
                                 singleLine = true,
-                                shape = RoundedCornerShape(4.dp),
+                                shape = RoundedCornerShape(0.dp),
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                                 keyboardActions = KeyboardActions(onGo = { focusManager.clearFocus() })
                             )
@@ -406,7 +459,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) 
                                     },
                                     singleLine = true,
-                                    shape = RoundedCornerShape(4.dp),
+                                    shape = RoundedCornerShape(0.dp),
                                     modifier = Modifier
                                         .menuAnchor()
                                         .height(56.dp)
