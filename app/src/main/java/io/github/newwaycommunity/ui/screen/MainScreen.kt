@@ -758,7 +758,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (!isOnline) {
-                            Column(modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                            Column(modifier = Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(painter = painterResource(id = R.drawable.wifi_off_24px), contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.error)
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(text = "Sem conexão", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
@@ -768,7 +768,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         } else if (isLoading && games.isEmpty()) {
                             LazyVerticalGrid(columns = GridCells.Adaptive(320.dp), modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) { items(8) { ShimmerGameCardItem() } }
                         } else if (games.isEmpty()) {
-                            Text(text = "Nenhum item encontrado.", modifier = Modifier.align(Alignment.Center).padding(32.dp), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                            Text(text = "Nenhum item encontrado.", modifier = Modifier.align(Alignment.Center).padding(32.dp), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, tint = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                         } else {
                             val displayGames = if (isUserLoggedInSimulated) {
                                 games
