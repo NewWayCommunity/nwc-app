@@ -31,10 +31,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -51,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import coil.compose.AsyncImage
 import io.github.newwaycommunity.R
 import io.github.newwaycommunity.model.Game
 import io.github.newwaycommunity.model.LinkObject
@@ -194,7 +200,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             onDismissRequest = { showLoginDialog = false },
             title = { Text("Acesso Administrativo", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     OutlinedTextField(
                         value = email,
                         onValueChange = { 
@@ -264,6 +270,8 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         var bannerUrl by remember { mutableStateOf(selectedGameForEdit?.banner ?: "") }
         var isPinned by remember { mutableStateOf(selectedGameForEdit?.pinned ?: false) }
         
+        var nameError by remember { mutableStateOf(false) }
+
         val dynamicLinks = remember { mutableStateListOf<LinkFieldState>().apply {
             selectedGameForEdit?.linkObjects?.forEachIndexed { idx, obj ->
                 add(LinkFieldState(idx, obj.label, obj.url))
@@ -275,9 +283,20 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             onDismissRequest = { showFormDialog = false },
             title = { Text(if (selectedGameForEdit != null) "Editar Item" else "Adicionar Item", fontWeight = FontWeight.Bold) },
             text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Column {
-                        OutlinedTextField(value = name, onValueChange = { if (it.length <= 30) name = it }, label = { Text("Nome") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(
+                            value = name, 
+                            onValueChange = { 
+                                if (it.length <= 30) name = it 
+                                nameError = false
+                            }, 
+                            label = { Text("Nome") }, 
+                            singleLine = true, 
+                            isError = nameError,
+                            supportingText = { if (nameError) Text("Nome obrigatório.") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                         Text(text = "${name.length} / 30", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     Column {
@@ -292,7 +311,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     Text("Links (Máx. 4)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     dynamicLinks.forEach { link ->
                         Card(modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Column {
                                     OutlinedTextField(value = link.label, onValueChange = { if (it.length <= 20) { link.label = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(label = it) } }, label = { Text("Nome do link *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                                     Text(text = "${link.label.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
@@ -307,12 +326,13 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         }
                     }
                     
-                    if (dynamicLinks.size < 4) {
-                        TextButton(onClick = { dynamicLinks.add(LinkFieldState(nextLinkId++)) }) {
-                            Icon(painter = painterResource(id = R.drawable.add_24px), contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Adicionar Link")
-                        }
+                    TextButton(
+                        onClick = { if (dynamicLinks.size < 4) dynamicLinks.add(LinkFieldState(nextLinkId++)) },
+                        enabled = dynamicLinks.size < 4
+                    ) {
+                        Icon(painter = painterResource(id = R.drawable.add_24px), contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Adicionar Link")
                     }
 
                     OutlinedTextField(
@@ -331,7 +351,10 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             },
             confirmButton = {
                 Button(onClick = {
-                    if (name.isBlank()) return@Button
+                    if (name.isBlank()) {
+                        nameError = true
+                        return@Button
+                    }
                     
                     val gameToSave = Game(
                         id = selectedGameForEdit?.id ?: "",
@@ -385,7 +408,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             },
             text = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -485,7 +508,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             onDismissRequest = { if (!isDownloading) showUpdateDialog = false },
             title = { Text("Nova Atualização disponível!", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Versão: $serverVersionName")
                     if (serverChangelog.isNotEmpty()) {
                         Text("Novidades:", fontWeight = FontWeight.Bold)
@@ -730,4 +753,3 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             }
         }
     }
-}
