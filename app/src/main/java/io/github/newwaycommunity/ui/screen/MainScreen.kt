@@ -70,7 +70,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
-private data class LinkFieldState(val id: Int, var label: String = "", var url: String = "")
+private data class LinkFieldState(val id: Int, val label: MutableState<String>, val url: MutableState<String>)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -274,7 +274,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
 
         val dynamicLinks = remember { mutableStateListOf<LinkFieldState>().apply {
             selectedGameForEdit?.linkObjects?.forEachIndexed { idx, obj ->
-                add(LinkFieldState(idx, obj.label, obj.url))
+                add(LinkFieldState(idx, mutableStateOf(obj.label), mutableStateOf(obj.url)))
             }
         }}
         var nextLinkId by remember { mutableStateOf(dynamicLinks.size) }
@@ -294,13 +294,20 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                             label = { Text("Nome") }, 
                             singleLine = true, 
                             isError = nameError,
-                            supportingText = { if (nameError) Text("Nome obrigatório.") },
+                            supportingText = if (nameError) { { Text("Nome obrigatório.") } } else null,
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(text = "${name.length} / 30", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     Column {
-                        OutlinedTextField(value = desc, onValueChange = { if (it.length <= 60) desc = it }, label = { Text("Descrição") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(
+                            value = desc, 
+                            onValueChange = { if (it.length <= 60) desc = it }, 
+                            label = { Text("Descrição") }, 
+                            minLines = 3,
+                            maxLines = 3,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                         Text(text = "${desc.length} / 60", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     Column {
@@ -308,17 +315,43 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         Text(text = "${category.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
                     }
                     
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text("Links (Máx. 4)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    dynamicLinks.forEach { link ->
-                        Card(modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Column {
-                                    OutlinedTextField(value = link.label, onValueChange = { if (it.length <= 20) { link.label = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(label = it) } }, label = { Text("Nome do link *") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                                    Text(text = "${link.label.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedTextField(value = link.url, onValueChange = { link.url = it; val idx = dynamicLinks.indexOf(link); if(idx != -1) dynamicLinks[idx] = link.copy(url = it) }, label = { Text("URL *") }, singleLine = true, modifier = Modifier.weight(1f))
-                                    IconButton(onClick = { dynamicLinks.remove(link) }) {
+                    
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(vertical = 6.dp)) {
+                        dynamicLinks.forEach { link ->
+                            key(link.id) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color.White.copy(alpha = 0.03f), shape = RoundedCornerShape(12.dp))
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Column {
+                                            OutlinedTextField(
+                                                value = link.label.value, 
+                                                onValueChange = { if (it.length <= 20) link.label.value = it }, 
+                                                label = { Text("Nome do link *") }, 
+                                                singleLine = true, 
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            Text(text = "${link.label.value.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
+                                        }
+                                        OutlinedTextField(
+                                            value = link.url.value, 
+                                            onValueChange = { link.url.value = it }, 
+                                            label = { Text("URL *") }, 
+                                            singleLine = true, 
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { dynamicLinks.remove(link) },
+                                        modifier = Modifier.align(Alignment.CenterVertically)
+                                    ) {
                                         Icon(painter = painterResource(id = R.drawable.delete_24px), contentDescription = "Remover Link", tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
@@ -327,7 +360,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     }
                     
                     TextButton(
-                        onClick = { if (dynamicLinks.size < 4) dynamicLinks.add(LinkFieldState(nextLinkId++)) },
+                        onClick = { if (dynamicLinks.size < 4) dynamicLinks.add(LinkFieldState(nextLinkId++, mutableStateOf(""), mutableStateOf(""))) },
                         enabled = dynamicLinks.size < 4
                     ) {
                         Icon(painter = painterResource(id = R.drawable.add_24px), contentDescription = null)
@@ -364,7 +397,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         banner = bannerUrl.trim().ifBlank { null },
                         pinned = isPinned,
                         createdAt = selectedGameForEdit?.createdAt ?: System.currentTimeMillis(),
-                        linkObjects = dynamicLinks.filter { it.label.isNotBlank() && it.url.isNotBlank() }.map { LinkObject(it.label.trim(), it.url.trim()) }
+                        linkObjects = dynamicLinks.filter { it.label.value.isNotBlank() && it.url.value.isNotBlank() }.map { LinkObject(it.label.value.trim(), it.url.value.trim()) }
                     )
                     
                     viewModel.saveGame(gameToSave) { success ->
