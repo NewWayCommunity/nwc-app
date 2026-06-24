@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import coil.compose.AsyncImage
 import io.github.newwaycommunity.R
 import io.github.newwaycommunity.model.Game
 import io.github.newwaycommunity.model.LinkObject
@@ -233,7 +232,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                     if (success) {
                                         showLoginDialog = false
                                         isUserLoggedInSimulated = true
-                                        Toast.makeText(context, "Autenticado!", Toast.LENGTH_SHORT).show()
                                     } else {
                                         emailError = true
                                         emailErrorText = error ?: "Erro ao entrar."
@@ -251,7 +249,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         if (success) {
                             showLoginDialog = false
                             isUserLoggedInSimulated = true
-                            Toast.makeText(context, "Autenticado!", Toast.LENGTH_SHORT).show()
                         } else {
                             emailError = true
                             emailErrorText = error ?: "Erro ao entrar."
@@ -285,7 +282,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
             onDismissRequest = { showFormDialog = false },
             title = { 
                 Text(
-                    text = if (selectedGameForEdit != null) "Editar em $sectionTitle" else "Adicionar em $sectionTitle", 
+                    text = if (selectedGameForEdit != null) "Editar" else "Adicionar em $sectionTitle", 
                     fontWeight = FontWeight.Bold
                 ) 
             },
@@ -328,45 +325,47 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(vertical = 6.dp)) {
                         dynamicLinks.forEach { link ->
                             key(link.id) {
-                                Column(
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color.White.copy(alpha = 0.03f), shape = RoundedCornerShape(12.dp))
-                                        .padding(8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        .background(Color.White.copy(alpha = 0.02f), shape = RoundedCornerShape(12.dp))
+                                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)), shape = RoundedCornerShape(12.dp))
+                                        .padding(8.dp)
                                 ) {
-                                    Column {
-                                        OutlinedTextField(
-                                            value = link.label.value, 
-                                            onValueChange = { if (it.length <= 20) link.label.value = it }, 
-                                            label = { Text("Nome do link *") }, 
-                                            singleLine = true, 
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                        Text(text = "${link.label.value.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
-                                    }
-                                    
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        OutlinedTextField(
-                                            value = link.url.value, 
-                                            onValueChange = { link.url.value = it }, 
-                                            label = { Text("URL *") }, 
-                                            singleLine = true, 
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        IconButton(
-                                            onClick = { dynamicLinks.remove(link) },
-                                            modifier = Modifier.padding(top = 4.dp)
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.delete_24px), 
-                                                contentDescription = "Remover Link", 
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Column {
+                                            OutlinedTextField(
+                                                value = link.label.value, 
+                                                onValueChange = { if (it.length <= 20) link.label.value = it }, 
+                                                label = { Text("Nome do link *") }, 
+                                                singleLine = true, 
+                                                modifier = Modifier.fillMaxWidth()
                                             )
+                                            Text(text = "${link.label.value.length} / 20", fontSize = 11.sp, modifier = Modifier.align(Alignment.End).padding(top = 2.dp))
+                                        }
+                                        
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            OutlinedTextField(
+                                                value = link.url.value, 
+                                                onValueChange = { link.url.value = it }, 
+                                                label = { Text("URL *") }, 
+                                                singleLine = true, 
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            IconButton(
+                                                onClick = { dynamicLinks.remove(link) },
+                                                modifier = Modifier.padding(top = 4.dp)
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(id = R.drawable.delete_24px), 
+                                                    contentDescription = "Remover Link", 
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -417,7 +416,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     
                     viewModel.saveGame(gameToSave) { success ->
                         if (success) {
-                            Toast.makeText(context, "Salvo no Firebase!", Toast.LENGTH_SHORT).show()
                             showFormDialog = false
                         } else {
                             Toast.makeText(context, "Erro ao salvar!", Toast.LENGTH_SHORT).show()
@@ -503,7 +501,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     onClick = {
                         viewModel.deleteAllGames { success ->
                             if (success) {
-                                Toast.makeText(context, "Seção limpa com sucesso!", Toast.LENGTH_SHORT).show()
                                 showDeleteAllDialog = false
                                 confirmText = ""
                             } else {
@@ -538,7 +535,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     onClick = {
                         viewModel.deleteGame(gameToDelete!!.id) { success ->
-                            if (success) Toast.makeText(context, "Deletado!", Toast.LENGTH_SHORT).show()
                             gameToDelete = null
                         }
                     }
@@ -670,7 +666,6 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                             IconButton(onClick = {
                                 if (isUserLoggedInSimulated) {
                                     isUserLoggedInSimulated = false
-                                    Toast.makeText(context, "Log-out efetuado!", Toast.LENGTH_SHORT).show()
                                 } else {
                                     showLoginDialog = true
                                 }
@@ -718,8 +713,8 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         )
                         
                         ExposedDropdownMenuBox(
-                            expanded = dropdownExpanded && isOnline && !isLoading,
-                            onExpandedChange = { if (isOnline && !isLoading) dropdownExpanded = !dropdownExpanded },
+                            expanded = dropdownExpanded,
+                            onExpandedChange = { dropdownExpanded = !dropdownExpanded },
                             modifier = Modifier.width(140.dp).fillMaxHeight()
                         ) {
                             OutlinedTextField(
