@@ -12,6 +12,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -110,7 +111,10 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var gameToDelete by remember { mutableStateOf<Game?>(null) }
     var selectedGameForEdit by remember { mutableStateOf<Game?>(null) }
-    var isUserLoggedInSimulated by remember { mutableStateOf(false) }
+
+    var isUserLoggedInSimulated by remember { 
+        mutableStateOf(sharedPreferences.getBoolean("admin_logged_in", false)) 
+    }
 
     val isCalculatedDark = when (selectedThemeMode) {
         0 -> false
@@ -194,6 +198,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
         var password by remember { mutableStateOf("") }
         var emailError by remember { mutableStateOf(false) }
         var emailErrorText by remember { mutableStateOf("") }
+        var rememberMe by remember { mutableStateOf(true) }
 
         AlertDialog(
             onDismissRequest = { showLoginDialog = false },
@@ -232,6 +237,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                                     if (success) {
                                         showLoginDialog = false
                                         isUserLoggedInSimulated = true
+                                        sharedPreferences.edit().putBoolean("admin_logged_in", rememberMe).apply()
                                     } else {
                                         emailError = true
                                         emailErrorText = error ?: "Erro ao entrar."
@@ -241,6 +247,25 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
+                    
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp)
+                            .clickable { rememberMe = !rememberMe },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = rememberMe,
+                            onCheckedChange = { rememberMe = it }
+                        )
+                        Text(
+                            text = "Lembrar-me",
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(start = 6.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -249,6 +274,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                         if (success) {
                             showLoginDialog = false
                             isUserLoggedInSimulated = true
+                            sharedPreferences.edit().putBoolean("admin_logged_in", rememberMe).apply()
                         } else {
                             emailError = true
                             emailErrorText = error ?: "Erro ao entrar."
@@ -666,6 +692,7 @@ fun MainScreen(viewModel: MainViewModel, mediaPlayer: MediaPlayer) {
                             IconButton(onClick = {
                                 if (isUserLoggedInSimulated) {
                                     isUserLoggedInSimulated = false
+                                    sharedPreferences.edit().putBoolean("admin_logged_in", false).apply()
                                 } else {
                                     showLoginDialog = true
                                 }
